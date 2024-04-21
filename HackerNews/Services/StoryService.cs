@@ -10,11 +10,8 @@ namespace HackerNews.Services
         {
             try
             {
-                var response = await httpClient.GetFromJsonAsync<int[]>("beststories.json");
-                if (response == null)
-                {
-                    response = [];
-                }
+                var response = (await httpClient.GetFromJsonAsync<int[]>("beststories.json")) ?? [];
+
                 return response;
             }
             catch (Exception ex)
@@ -30,10 +27,12 @@ namespace HackerNews.Services
             {
                 var key = $"Story_{id}";
                 var cachedStory = await cachService.GetDataAsync<Story>(key);
+
                 if (cachedStory != null)
                 {
                     return cachedStory;
                 }
+
                 var response = await httpClient.GetStringAsync($"item/{id}.json");
                 var story = JsonConvert.DeserializeObject<Story>(response);
 

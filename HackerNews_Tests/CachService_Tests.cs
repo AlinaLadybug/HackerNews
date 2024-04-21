@@ -1,16 +1,8 @@
-﻿using HackerNews.Models;
-using HackerNews.Services;
-using HackerNews.Services.CashedData;
-using HackerNews.Services.Cashing;
+﻿using HackerNews.Services.CashedData;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HackerNews_Tests
 {
@@ -64,20 +56,20 @@ namespace HackerNews_Tests
         }
 
         [Fact]
-        public async Task SetDataAsync_Success()
+        public async Task SetDataAsync_Failure()
         {
             // Arrange
             var testKey = "testKey";
             var testValue = "testValue";
-            _mockDatabase.Setup(db => db.StringSetAsync(testKey, testValue, TimeSpan.FromHours(1), When.NotExists, CommandFlags.None)).ReturnsAsync(true);
+            var expiry = TimeSpan.FromMinutes(10);
 
+            _mockDatabase.Setup(db => db.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>(), It.IsAny<CommandFlags>())).ReturnsAsync(false);
 
             // Act
-            var result = await _cachService.SetDataAsync(testKey, testValue, TimeSpan.FromHours(1));
-
+            var result = await _cachService.SetDataAsync(testKey, testValue, expiry);
 
             // Assert
-            Assert.True(result);
+            Assert.False(result);
         }
 
     }

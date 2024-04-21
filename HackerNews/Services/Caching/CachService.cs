@@ -4,34 +4,21 @@ using StackExchange.Redis;
 
 namespace HackerNews.Services.CashedData
 {
-    public class CachService : ICachService
+    public class CachService(ILogger<CachService> logger, IConnectionMultiplexer connectionMultiplexer) : ICachService
     {
-        private readonly IConnectionMultiplexer _connectionMultiplexer;
-        private readonly ILogger<CachService> _logger;
-        public CachService(ILogger<CachService> logger, IConnectionMultiplexer connectionMultiplexer)
-        {
-            _logger = logger;
-            _connectionMultiplexer = connectionMultiplexer;
-        }
-
         public async Task<T?> GetDataAsync<T>(string key)
         {
             try
             {
-                var db = _connectionMultiplexer.GetDatabase();
+                var db = connectionMultiplexer.GetDatabase();
 
                 var data = await db.StringGetAsync(key);
 
-                if (!data.IsNullOrEmpty)
-                {
-                    return JsonConvert.DeserializeObject<T>(data);
-                }
-
-                return default;
+                return data.IsNullOrEmpty ? default : JsonConvert.DeserializeObject<T>(data);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occured when getting data from redis {Key}", key);
+                logger.LogError(ex, "Error occured when getting data from redis {Key}", key);
 
                 return default;
             }
@@ -41,15 +28,14 @@ namespace HackerNews.Services.CashedData
         {
             try
             {
-                var db = _connectionMultiplexer.GetDatabase();
+                var db = connectionMultiplexer.GetDatabase();
 
-                var isSuccess =  await db.StringSetAsync(key, value, expiry);
-
-                return isSuccess;
+                return await db.StringSetAsync(key, value, expiry);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occured when setting data into redis {Key}, {Value}", key, value);
+                logger.LogError(ex, "Error occured when setting data into redis {Key}, {Value}", key, value);
+
                 return default;
             }
         }
