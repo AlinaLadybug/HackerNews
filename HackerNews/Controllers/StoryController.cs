@@ -1,6 +1,9 @@
-﻿using HackerNews.Models;
+﻿using HackerNews.Mappers;
+using HackerNews.Models;
 using HackerNews.Services;
+using HackerNews.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace HackerNews.Controllers
 {
@@ -9,9 +12,27 @@ namespace HackerNews.Controllers
     public class StoryController(IStoryService storyService) : Controller
     {
         [HttpGet("top-best/{number}")]
-        public async Task<IEnumerable<Story>> GetTopBestStoriesAsync(int number)
+        public async Task<IActionResult> GetTopBestStoriesAsync(int number)
         {
-            return await storyService.GetTopBestStoriesAsync(number);
+            try
+            {
+
+                var stories = await storyService.GetTopBestStoriesAsync(number);
+                var storyViewModels = new List<StoryViewModel>();
+
+                foreach (var story in stories)
+                {
+                    var storyViewModel = StoryMapper.MapToViewModel(story);
+
+                    storyViewModels.Add(storyViewModel);
+                }
+
+                return Ok(storyViewModels);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
