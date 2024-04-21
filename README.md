@@ -48,3 +48,5 @@ Here are some additional features that can be added to enhance the functionality
 6. **Mapping**: Create additional DTO models to return original models in different way, use Automapper.
 
 7. **Tests**: Cover more functionality with unit tests and also integration tests with hackernews API.
+
+8. **Naming and structure**: Improve naming due to domain, and divide solution into different layers.

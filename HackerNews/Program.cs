@@ -2,6 +2,7 @@ using HackerNews.BackgroundWorkers;
 using HackerNews.Services;
 using HackerNews.Services.CashedData;
 using HackerNews.Services.Cashing;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Converters;
 using StackExchange.Redis;
 
@@ -12,7 +13,7 @@ builder.Services.AddLogging();
 
 builder.Services.AddHttpClient<IStoryService, StoryService>((provider, client) =>
 {
-    client.BaseAddress = new Uri("https://hacker-news.firebaseio.com/v0/");
+    client.BaseAddress = new Uri(builder.Configuration["HACKER_NEWS_API"] ?? throw new ArgumentException("HACKER_NEWS_API"));
 
 });
 
@@ -27,7 +28,6 @@ builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//TODO exception handler
 builder.Services.AddTransient<ICachService, CachService>();
 builder.Services.AddHostedService<PreHeatWorker>();
 var app = builder.Build();
