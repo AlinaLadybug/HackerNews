@@ -1,7 +1,5 @@
 ﻿using HackerNews.Services.Cashing;
 using Newtonsoft.Json;
-using NRedisStack;
-using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
 
 namespace HackerNews.Services.CashedData
@@ -18,18 +16,6 @@ namespace HackerNews.Services.CashedData
 
         public async Task<T?> GetDataAsync<T>(string key)
         {
-
-            //ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");
-            //IDatabase db = redis.GetDatabase();
-
-            //var hash = new HashEntry[] {new HashEntry("name", "John"),
-            //                            new HashEntry("surname", "Smith"),
-            //                            new HashEntry("company", "Redis"),
-            //                            new HashEntry("age", "29"),
-            //                            };
-            //var jsonCommands = db.JSON();
-            //var data = await jsonCommands.GetEnumerableAsync<T>(key);
-            //return data;
             try
             {
                 var db = _connectionMultiplexer.GetDatabase();
@@ -57,7 +43,9 @@ namespace HackerNews.Services.CashedData
             {
                 var db = _connectionMultiplexer.GetDatabase();
 
-                return await db.StringSetAsync(key, value, expiry);
+                var isSuccess =  await db.StringSetAsync(key, value, expiry);
+
+                return isSuccess;
             }
             catch (Exception ex)
             {

@@ -1,30 +1,16 @@
 ﻿using HackerNews.Models;
 using HackerNews.Services.Cashing;
 using Newtonsoft.Json;
-using StackExchange.Redis;
 
 namespace HackerNews.Services
 {
-    public class StoryService : IStoryService
+    public class StoryService(ILogger<StoryService> logger, ICachService cachService, HttpClient httpClient) : IStoryService
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<StoryService> _logger;
-        private readonly ICachService _cachService;
-
-        public StoryService(IHttpClientFactory httpClientFactory, ILogger<StoryService> logger,
-            ICachService cachService)
-        {
-            _httpClient = httpClientFactory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://hacker-news.firebaseio.com/v0/");
-            _logger = logger;
-            _cachService = cachService;
-        }
-
         public async Task<int[]> GetAllStoriesIdsAsync()
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<int[]>("beststories.json");
+                var response = await httpClient.GetFromJsonAsync<int[]>("beststories.json");
                 if (response == null)
                 {
                     response = [];
@@ -33,7 +19,7 @@ namespace HackerNews.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching best story IDs.");
+                logger.LogError(ex, "Error occurred while fetching best story IDs.");
                 throw;
             }
         }
@@ -43,24 +29,51 @@ namespace HackerNews.Services
             try
             {
                 var key = $"Story_{id}";
-                var cachedStory = await _cachService.GetDataAsync<Story>(key);
+                var cachedStory = await cachService.GetDataAsync<Story>(key);
                 if (cachedStory != null)
                 {
                     return cachedStory;
                 }
-
-                var response = await _httpClient.GetStringAsync($"item/{id}.json");
+                var response = await httpClient.GetStringAsync($"item/{id}.json");
                 var story = JsonConvert.DeserializeObject<Story>(response);
 
-                await _cachService.SetDataAsync(key, response, expiry: TimeSpan.FromDays(1));
+                await cachService.SetDataAsync(key, response, expiry: TimeSpan.FromDays(1));
 
                 return story;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching story details for ID: {StoryId}", id);
+                logger.LogError(ex, "Error occurred while fetching story details for ID: {StoryId}", id);
 
                 return default;
+            }
+        }
+
+        public async Task<IEnumerable<Story>> GetTopBestStoriesAsync(int number)
+        {
+            try
+            {
+                var stories = new List<Story>();
+                var ids = await GetAllStoriesIdsAsync();
+                var tasks = ids.Select(GetStoryByIdAsync);
+
+                await Task.WhenAll(tasks);
+
+                foreach (var item in tasks)
+                {
+                    if (item.Result != null)
+                    {
+                        stories.Add(item.Result);
+                    }
+                }
+
+                return stories.OrderByDescending(story => story.Score).Take(number);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while getting top best stories");
+
+                throw;
             }
         }
     }

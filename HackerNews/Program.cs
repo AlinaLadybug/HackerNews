@@ -1,9 +1,8 @@
+using HackerNews.BackgroundWorkers;
 using HackerNews.Services;
-using HackerNews.Services.Caching;
 using HackerNews.Services.CashedData;
 using HackerNews.Services.Cashing;
 using Newtonsoft.Json.Converters;
-using Redis.OM;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,10 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddLogging();
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<IStoryService, StoryService>((provider, client) =>
+{
+    client.BaseAddress = new Uri("https://hacker-news.firebaseio.com/v0/");
+
+});
 
 builder.Services.AddSingleton<IConnectionMultiplexer>
-    (ConnectionMultiplexer.Connect(builder.Configuration["REDIS_CONNECTION_STRING"]));
+    (ConnectionMultiplexer.Connect(builder.Configuration["REDIS_CONNECTION_STRING"] ?? throw new ArgumentException("REDIS_CONNECTION_STRING")));
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
         options.SerializerSettings.Converters.Add(new StringEnumConverter()));
@@ -24,10 +27,9 @@ builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//TODO
+//TODO exception handler
 builder.Services.AddTransient<ICachService, CachService>();
-builder.Services.AddTransient<IStoryService, StoryService>();
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddHostedService<PreHeatWorker>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

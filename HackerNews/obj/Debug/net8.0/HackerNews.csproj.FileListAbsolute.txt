@@ -42,3 +42,4 @@ C:\Users\admin\source\repos\HackerNews\HackerNews\bin\Debug\net8.0\Microsoft.Asp
 C:\Users\admin\source\repos\HackerNews\HackerNews\bin\Debug\net8.0\Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
 C:\Users\admin\source\repos\HackerNews\HackerNews\bin\Debug\net8.0\Newtonsoft.Json.Bson.dll
 C:\Users\admin\source\repos\HackerNews\HackerNews\bin\Debug\net8.0\Swashbuckle.AspNetCore.Newtonsoft.dll
+C:\Users\admin\source\repos\HackerNews\HackerNews\obj\Debug\net8.0\HackerNews.sourcelink.json
